@@ -1,7 +1,7 @@
 clear;
 % Set up video reader and writer
 inputVideo = VideoReader('Videos\inputs\ball1.mp4');  % Adjust with your input video filename
-outputVideo = VideoWriter('Videos\outputs\ball1_display_and_record_violations.mp4', 'MPEG-4');  % Output video filename
+outputVideo = VideoWriter('Videos\outputs\Ball1\ball1_display_and_record_violations.mp4', 'MPEG-4');  % Output video filename
 
 open(outputVideo);  % Open the video writer for writing
 headers = {'X','Y'};
@@ -50,6 +50,16 @@ while hasFrame(inputVideo)
             y = round(centers(i, 2));  % Y coordinate of the center
             timestamp = inputVideo.CurrentTime;  % Get the current timestamp in seconds
 
+            % Determine outline color based on the bead's position relative to the violation line
+            if y < violationLineY  % Safe zone
+                outlineColor = 'green';
+            else  % Violation zone
+                outlineColor = 'red';
+            end
+
+            % Draw the outline of the circle (bead) using insertShape
+            frame = insertShape(frame, 'Circle', [x, y, radii(i)], 'Color', outlineColor, 'LineWidth', 5);
+
             % Check if the bead has crossed or is below the violation line
             if ~violationFlag && y > violationLineY
                 violationFlag = true;
@@ -87,12 +97,12 @@ end
 close(outputVideo);
 
 % Write coordinates and violations to the CSV files
-writecell(headers, 'Videos\outputs\ball1_detected_coordinates.csv');
-writematrix(coordinates, 'Videos\outputs\ball1_detected_coordinates.csv', 'WriteMode', 'append');
+writecell(headers, 'Videos\outputs\Ball1\ball1_detected_coordinates.csv');
+writematrix(coordinates, 'Videos\outputs\Ball1\ball1_detected_coordinates.csv', 'WriteMode', 'append');
 
 % Write violation records to the violation CSV file
 violationHeaders = {'Time', 'X', 'Y', 'Status'};
-writecell(violationHeaders, 'Videos\outputs\ball1_violation_record.csv');
-writecell(violationRecords, 'Videos\outputs\ball1_violation_record.csv', 'WriteMode', 'append');
+writecell(violationHeaders, 'Videos\outputs\Ball1\ball1_violation_record.csv');
+writecell(violationRecords, 'Videos\outputs\Ball1\ball1_violation_record.csv', 'WriteMode', 'append');
 
 disp('Done');

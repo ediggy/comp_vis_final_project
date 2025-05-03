@@ -1,0 +1,129 @@
+% Clear environment
+clear; clc; close all;
+
+% Load the processed video
+inputVideo = VideoReader('Videos\outputs\ball4_display_and_record_violations.mp4');
+
+% Load the coordinates
+coordinatesFile = 'Videos\outputs\ball4_detected_coordinates.csv';
+coordinatesData = readmatrix(coordinatesFile);
+
+% Set up the new output video
+outputVideo = VideoWriter('Videos\outputs\overlay_on_video.mp4', 'MPEG-4');
+open(outputVideo);
+
+% Violation line settings
+violationLineRatio = 0.6;  % Same as detection
+violationLineY = violationLineRatio * inputVideo.Height;
+
+frameIdx = 1;
+
+while hasFrame(inputVideo)
+    % Read next frame
+    frame = readFrame(inputVideo);
+    
+    % Create an RGB frame if it's not already
+    if size(frame, 3) ~= 3
+        frame = repmat(frame, [1 1 3]);
+    end
+
+    % Get points up to current frame
+    if frameIdx <= size(coordinatesData, 1)
+        % Draw trajectory path
+        for i = 2:frameIdx
+            x1 = coordinatesData(i-1, 1);
+            y1 = coordinatesData(i-1, 2);
+            x2 = coordinatesData(i, 1);
+            y2 = coordinatesData(i, 2);
+            
+            frame = insertShape(frame, 'Line', [x1, y1, x2, y2], 'Color', 'yellow', 'LineWidth', 3);
+        end
+        
+        % Draw small circles at each point
+        for i = 1:frameIdx
+            x = coordinatesData(i, 1);
+            y = coordinatesData(i, 2);
+            frame = insertShape(frame, 'FilledCircle', [x, y, 5], 'Color', 'yellow');
+        end
+    end
+    
+    % Draw the violation line
+    frame = insertShape(frame, 'Line', [0 violationLineY inputVideo.Width violationLineY], ...
+        'Color', 'red', 'LineWidth', 5);
+    
+    % Write updated frame to output video
+    writeVideo(outputVideo, frame);
+    
+    frameIdx = frameIdx + 1;
+end
+
+% Close the video writer
+close(outputVideo);
+disp('Overlay-on-video created successfully!');
+
+
+
+% % Clear environment
+% clear; clc; close all;
+% 
+% % Load the processed video
+% inputVideo = VideoReader('Videos\outputs\ball4_display_coordinates.mp4');
+% 
+% % Load the coordinates
+% coordinatesFile = 'Videos\outputs\ball4_detected_coordinates.csv';
+% coordinatesData = readmatrix(coordinatesFile);
+% 
+% % Set up the new output video
+% outputVideo = VideoWriter('Videos\outputs\ball4_final_overlay_video.mp4', 'MPEG-4');
+% open(outputVideo);
+% 
+% % Violation line settings
+% violationLineRatio = 0.5;  % Same as detection
+% violationLineY = violationLineRatio * inputVideo.Height;
+% 
+% % Prepare figure
+% figure('Units', 'normalized', 'Position', [0.2 0.2 1.2 0.6]);
+
+% frameIdx = 1;
+% 
+% while hasFrame(inputVideo)
+%     % Read next frame
+%     videoFrame = readFrame(inputVideo);
+% 
+%     % Create subplot 1: show video frame
+%     subplot(1,2,1);
+%     imshow(videoFrame);
+%     hold on;
+%     yline(violationLineY, '--r', 'Violation Line', 'LineWidth', 2);
+%     title(sprintf('Video Frame %d', frameIdx));
+%     hold off;
+% 
+%     % Create subplot 2: show trajectory plot
+%     subplot(1,2,2);
+%     plot(coordinatesData(1:frameIdx,1), coordinatesData(1:frameIdx,2), 'g-o', 'MarkerFaceColor', 'g');
+%     hold on;
+%     set(gca, 'YDir','reverse');  % Match image coordinates
+%     yline(violationLineY, '--r', 'Violation Line', 'LineWidth', 2);
+%     xlim([0 inputVideo.Width]);
+%     ylim([0 inputVideo.Height]);
+%     xlabel('X Coordinate');
+%     ylabel('Y Coordinate');
+%     title('Bead Trajectory (up to current frame)');
+%     grid on;
+%     hold off;
+% 
+%     % Capture the current figure as a frame
+%     frame = getframe(gcf);
+%     writeVideo(outputVideo, frame.cdata);
+% 
+%     frameIdx = frameIdx + 1;
+% 
+%     % Safety check to avoid exceeding coordinates
+%     if frameIdx > size(coordinatesData, 1)
+%         break;
+%     end
+% end
+% 
+% % Close the video writer
+% close(outputVideo);
+% disp('Final overlay video created successfully!');
